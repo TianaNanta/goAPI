@@ -6,9 +6,10 @@ import (
 	"github.com/TianaNanta/goAPI/initializers"
 	"github.com/TianaNanta/goAPI/models"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
-func CreateUser(c *gin.Context) {
+func SignUp(c *gin.Context) {
 
 	// get user input
 	var userInput struct {
@@ -19,18 +20,31 @@ func CreateUser(c *gin.Context) {
 	}
 	c.BindJSON(&userInput)
 
+	// hash password
+	hashed, er := bcrypt.GenerateFromPassword([]byte(userInput.Password), 10)
+
+	if er != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to hash password",
+		})
+		return
+	}
+
 	// create user
 	user := models.User{
 		Username: userInput.Username,
 		Email:    userInput.Email,
-		Password: userInput.Password,
+		Password: string(hashed),
 		Avatar:   userInput.Avatar,
 	}
+
 	result := initializers.DB.Create(&user)
 	err := result.Error
 
 	if err != nil {
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to create user",
+		})
 		return
 	}
 

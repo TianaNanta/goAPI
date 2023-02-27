@@ -19,7 +19,7 @@ func main() {
 	r.GET("/users/:id", controllers.GetUser)
 
 	// POST method
-	r.POST("/users", controllers.CreateUser)
+	r.POST("/users", controllers.SignUp)
 
 	// PUT method
 	r.PUT("/users/:id/password", controllers.UpdateUserPassword)
