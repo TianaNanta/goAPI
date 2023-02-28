@@ -19,7 +19,6 @@ func SignUp(c *gin.Context) {
 		Username string `json:"username" binding:"required"`
 		Email    string `json:"email"`
 		Password string `json:"password"`
-		Avatar   string `json:"avatar"`
 	}
 	c.BindJSON(&userInput)
 
@@ -38,7 +37,6 @@ func SignUp(c *gin.Context) {
 		Username: userInput.Username,
 		Email:    userInput.Email,
 		Password: string(hashed),
-		Avatar:   userInput.Avatar,
 	}
 
 	// check if the user with the same username already exists
