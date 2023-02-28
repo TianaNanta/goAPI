@@ -29,10 +29,15 @@ func main() {
 		c.HTML(http.StatusOK, "upload.html", gin.H{})
 	})
 
+	r.GET("/trosa/me/volako", middleware.RequireAuth, controllers.GetTrosaForOwner)
+	r.GET("/trosa/me/an_olona", middleware.RequireAuth, controllers.GetTrosaForInDept)
+
 	// POST method
 	r.POST("/users", controllers.SignUp)
 	r.POST("/users/login", controllers.Login)
 	r.POST("/users/me/avatar", middleware.RequireAuth, controllers.UploadAvatar)
+
+	r.POST("/trosa/me", middleware.RequireAuth, controllers.CreateTrosa)
 
 	// PUT method
 	r.PUT("/users/me/password", middleware.RequireAuth, controllers.UpdateUserPassword)
