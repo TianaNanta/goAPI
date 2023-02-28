@@ -27,10 +27,10 @@ func main() {
 
 	// PUT method
 	r.PUT("/users/me/password", middleware.RequireAuth, controllers.UpdateUserPassword)
-	r.PUT("/users/me", middleware.RequireAuth, controllers.UpdateUser)
+	r.PUT("/users/me/update", middleware.RequireAuth, controllers.UpdateUser)
 
 	// DELETE method
-	r.DELETE("/users/:id", controllers.DeleteUser)
+	r.DELETE("/users/me/delete", controllers.DeleteUser)
 
 	r.Run() // listen and serve on 0.0.0.0:8080
 }

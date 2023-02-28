@@ -182,9 +182,10 @@ func UpdateUser(c *gin.Context) {
 
 // delete user
 func DeleteUser(c *gin.Context) {
+	me, _ := c.Get("user")
 	var user models.User
 
-	initializers.DB.First(&user, c.Param("id"))
+	initializers.DB.First(&user, me.(models.User).ID)
 
 	initializers.DB.Delete(&user)
 
