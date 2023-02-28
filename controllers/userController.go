@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/TianaNanta/goAPI/initializers"
 	"github.com/TianaNanta/goAPI/models"
@@ -89,17 +90,44 @@ func GetUser(c *gin.Context) {
 
 // update user password
 func UpdateUserPassword(c *gin.Context) {
+	me, _ := c.Get("user")
 	var user models.User
 
-	initializers.DB.First(&user, c.Param("id"))
+	initializers.DB.First(&user, me.(models.User).ID)
 
 	var userInput struct {
-		Password string `json:"password"`
+		OldPassword     string
+		Password        string `json:"password"`
+		ConfirmPassword string
 	}
 
 	c.BindJSON(&userInput)
 
-	user.Password = userInput.Password
+	// check if old password is correct
+	er := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userInput.OldPassword))
+	if er != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Wrong old password",
+		})
+		return
+	}
+
+	// check if new password and confirm password are the same
+	if userInput.Password != userInput.ConfirmPassword {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "New password and confirm password are not the same",
+		})
+		return
+	}
+
+	// hash password
+	hashed, err := bcrypt.GenerateFromPassword([]byte(userInput.Password), 10)
+
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+	}
+
+	user.Password = string(hashed)
 
 	initializers.DB.Save(&user)
 
@@ -174,7 +202,7 @@ func Login(c *gin.Context) {
 	// create a new token object
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.ID,
-		"exp": 15000,
+		"exp": time.Now().Add(time.Hour * 1).Unix(), // token expires in 1 hour)
 	})
 
 	// sign the token with our secret
@@ -193,5 +221,22 @@ func Login(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
+	})
+}
+
+// get current user
+func GetMe(c *gin.Context) {
+	user, _ := c.Get("user")
+
+	c.JSON(http.StatusOK, gin.H{
+		"user": user,
+	})
+}
+
+func GetMyEmail(c *gin.Context) {
+	user, _ := c.Get("user")
+
+	c.JSON(http.StatusOK, gin.H{
+		"email": user.(models.User).Email,
 	})
 }

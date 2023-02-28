@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/TianaNanta/goAPI/controllers"
 	"github.com/TianaNanta/goAPI/initializers"
+	"github.com/TianaNanta/goAPI/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,13 +18,15 @@ func main() {
 	// GET method
 	r.GET("/users", controllers.GetUsers)
 	r.GET("/users/:id", controllers.GetUser)
+	r.GET("/users/me", middleware.RequireAuth, controllers.GetMe)
+	r.GET("/users/me/email", middleware.RequireAuth, controllers.GetMyEmail)
 
 	// POST method
 	r.POST("/users", controllers.SignUp)
 	r.POST("/users/login", controllers.Login)
 
 	// PUT method
-	r.PUT("/users/:id/password", controllers.UpdateUserPassword)
+	r.PUT("/users/me/password", middleware.RequireAuth, controllers.UpdateUserPassword)
 	r.PUT("/users/:id", controllers.UpdateUser)
 
 	// DELETE method
