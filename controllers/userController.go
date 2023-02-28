@@ -262,3 +262,37 @@ func GetMyEmail(c *gin.Context) {
 		"email": user.(models.User).Email,
 	})
 }
+
+func UploadAvatar(c *gin.Context) {
+	me, _ := c.Get("user")
+	var user models.User
+
+	initializers.DB.First(&user, me.(models.User).ID)
+
+	file, err := c.FormFile("avatar")
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to upload avatar",
+		})
+		return
+	}
+
+	// upload the file to specific dst.
+	err = c.SaveUploadedFile(file, "avatar/"+file.Filename)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to upload avatar",
+		})
+		return
+	}
+
+	user.Avatar = "avatar/" + file.Filename
+
+	initializers.DB.Save(&user)
+
+	c.HTML(http.StatusOK, "upload.html", gin.H{
+		"avatar": "avatar/" + file.Filename,
+	})
+}
