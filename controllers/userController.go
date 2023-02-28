@@ -138,19 +138,40 @@ func UpdateUserPassword(c *gin.Context) {
 
 // update user
 func UpdateUser(c *gin.Context) {
+	me, _ := c.Get("user")
 	var user models.User
 
-	initializers.DB.First(&user, c.Param("id"))
+	initializers.DB.First(&user, me.(models.User).ID)
 
 	var userInput struct {
 		Username string `json:"username"`
+		Email    string `json:"email"`
 		Avatar   string `json:"avatar"`
 	}
 
 	c.BindJSON(&userInput)
 
-	user.Username = userInput.Username
-	user.Avatar = userInput.Avatar
+	// check if the user with the same username already exists
+	err := initializers.DB.Where("username = ?", userInput.Username).First(&user).Error
+	if err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Username already exists",
+		})
+		return
+	}
+
+	// not change username if it is empty
+	if userInput.Username != "" {
+		user.Username = userInput.Username
+	}
+	// not change email if it is empty
+	if userInput.Email != "" {
+		user.Email = userInput.Email
+	}
+	// not change avatar if it is empty
+	if userInput.Avatar != "" {
+		user.Avatar = userInput.Avatar
+	}
 
 	initializers.DB.Save(&user)
 
