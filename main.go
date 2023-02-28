@@ -20,6 +20,7 @@ func main() {
 
 	// POST method
 	r.POST("/users", controllers.SignUp)
+	r.POST("/users/login", controllers.Login)
 
 	// PUT method
 	r.PUT("/users/:id/password", controllers.UpdateUserPassword)

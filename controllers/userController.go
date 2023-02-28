@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/TianaNanta/goAPI/initializers"
 	"github.com/TianaNanta/goAPI/models"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -169,7 +171,27 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// create a new token object
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": user.ID,
+		"exp": 15000,
+	})
+
+	// sign the token with our secret
+	tokenString, eror := token.SignedString([]byte(os.Getenv("SECRET")))
+
+	if eror != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to sign token",
+		})
+		return
+	}
+
+	// return the token as cookie
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("Authorization", tokenString, 3600, "/", "localhost", false, true)
+
 	c.JSON(http.StatusOK, gin.H{
-		"user": user,
+		"message": "Login successful",
 	})
 }
