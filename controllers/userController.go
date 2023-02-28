@@ -38,6 +38,15 @@ func SignUp(c *gin.Context) {
 		Avatar:   userInput.Avatar,
 	}
 
+	// check if the user with the same username already exists
+	eror := initializers.DB.Where("username = ?", userInput.Username).First(&user).Error
+	if eror == nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Username already exists",
+		})
+		return
+	}
+
 	result := initializers.DB.Create(&user)
 	err := result.Error
 
@@ -129,4 +138,38 @@ func DeleteUser(c *gin.Context) {
 	initializers.DB.Delete(&user)
 
 	c.Status(http.StatusOK)
+}
+
+// login user
+func Login(c *gin.Context) {
+	var userInput struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	c.BindJSON(&userInput)
+
+	var user models.User
+
+	initializers.DB.Where("username = ?", userInput.Username).First(&user)
+
+	if user.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "User not found",
+		})
+		return
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userInput.Password))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Wrong password",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"user": user,
+	})
 }
